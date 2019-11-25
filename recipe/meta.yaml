@@ -14,7 +14,7 @@ source:
 
 build:
   skip: True  # [win and vc<14]
-  number: 1007
+  number: 0
 
 requirements:
   build:
@@ -39,7 +39,7 @@ requirements:
     - shapely
     - scipy
     - pyshp
-    - matplotlib-base
+    - matplotlib
     - pyepsg
     - pykdtree
 
