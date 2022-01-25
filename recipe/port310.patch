@@ -1,0 +1,690 @@
+Index: Cartopy-0.18.0/lib/cartopy/_epsg.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/_epsg.py
++++ Cartopy-0.18.0/lib/cartopy/_epsg.py
+@@ -49,7 +49,7 @@ class _EPSGProjection(ccrs.Projection):
+ 
+         proj4_str = projection.as_proj4().strip()
+         terms = [term.strip('+').split('=') for term in proj4_str.split(' ')]
+-        globe_terms = filter(lambda term: term[0] in _GLOBE_PARAMS, terms)
++        globe_terms = [term for term in terms if term[0] in _GLOBE_PARAMS]
+         globe = ccrs.Globe(**{_GLOBE_PARAMS[name]: value for name, value in
+                               globe_terms})
+         other_terms = []
+Index: Cartopy-0.18.0/lib/cartopy/crs.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/crs.py
++++ Cartopy-0.18.0/lib/cartopy/crs.py
+@@ -1740,7 +1740,7 @@ class EckertVI(_Eckert):
+ 
+ 
+ class EqualEarth(_WarpedRectangularProjection):
+-    u"""
++    """
+     An Equal Earth projection.
+ 
+     This projection is pseudocylindrical, and equal area. Parallels are
+Index: Cartopy-0.18.0/lib/cartopy/io/__init__.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/io/__init__.py
++++ Cartopy-0.18.0/lib/cartopy/io/__init__.py
+@@ -33,7 +33,7 @@ import six
+ if six.PY3:
+     from urllib.request import urlopen
+ else:
+-    from urllib2 import urlopen
++    from urllib.request import urlopen
+ 
+ from cartopy import config
+ 
+Index: Cartopy-0.18.0/lib/cartopy/io/img_nest.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/io/img_nest.py
++++ Cartopy-0.18.0/lib/cartopy/io/img_nest.py
+@@ -39,7 +39,7 @@ class Img(collections.namedtuple('Img', 
+                 item = tuple(item)
+             new_args.append(item)
+         new_kwargs = {}
+-        for k, item in kwargs.items():
++        for k, item in list(kwargs.items()):
+             if isinstance(item, list):
+                 item = tuple(item)
+             new_kwargs[k] = item
+@@ -307,8 +307,8 @@ class NestedImageCollection(object):
+         if _ancestry is not None:
+             self._ancestry = _ancestry
+         else:
+-            parent_wth_children = zip(self._collections,
+-                                      self._collections[1:])
++            parent_wth_children = list(zip(self._collections,
++                                      self._collections[1:]))
+             for parent_collection, collection in parent_wth_children:
+                 for parent_image in parent_collection.images:
+                     for image in collection.images:
+Index: Cartopy-0.18.0/lib/cartopy/io/img_tiles.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/io/img_tiles.py
++++ Cartopy-0.18.0/lib/cartopy/io/img_tiles.py
+@@ -183,7 +183,8 @@ class GoogleWTS(six.with_metaclass(ABCMe
+         if six.PY3:
+             from urllib.request import urlopen, Request, HTTPError, URLError
+         else:
+-            from urllib2 import urlopen, Request, HTTPError, URLError
++            from urllib.request import urlopen, Request
++            from urllib.error import HTTPError, URLError
+ 
+         url = self._image_url(tile)
+         try:
+Index: Cartopy-0.18.0/lib/cartopy/io/ogc_clients.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/io/ogc_clients.py
++++ Cartopy-0.18.0/lib/cartopy/io/ogc_clients.py
+@@ -395,7 +395,7 @@ class WMTSRasterSource(RasterSource):
+         matrix_set_name = self._matrix_set_name_map.get(key)
+         if matrix_set_name is None:
+             if hasattr(self.layer, 'tilematrixsetlinks'):
+-                matrix_set_names = self.layer.tilematrixsetlinks.keys()
++                matrix_set_names = list(self.layer.tilematrixsetlinks.keys())
+             else:
+                 matrix_set_names = self.layer.tilematrixsets
+ 
+@@ -415,7 +415,7 @@ class WMTSRasterSource(RasterSource):
+             matrix_set_name = find_projection(target_projection)
+             if matrix_set_name is None:
+                 # Search instead for a set in _any_ projection we can use.
+-                for possible_projection in _URN_TO_CRS.values():
++                for possible_projection in list(_URN_TO_CRS.values()):
+                     # Look for supported projections (in a preferred order).
+                     matrix_set_name = find_projection(possible_projection)
+                     if matrix_set_name is not None:
+@@ -566,7 +566,7 @@ class WMTSRasterSource(RasterSource):
+ 
+         # Find which tile matrix has the appropriate resolution.
+         tile_matrix_set = wmts.tilematrixsets[matrix_set_name]
+-        tile_matrices = tile_matrix_set.tilematrix.values()
++        tile_matrices = list(tile_matrix_set.tilematrix.values())
+         meters_per_unit = METERS_PER_UNIT[tile_matrix_set.crs]
+         tile_matrix = self._choose_matrix(tile_matrices, meters_per_unit,
+                                           max_pixel_span)
+@@ -803,13 +803,13 @@ class WFSGeometrySource(object):
+         geoms_by_srs = {}
+         for srs, x, y in linear_rings_data:
+             geoms_by_srs.setdefault(srs, []).append(
+-                sgeom.LinearRing(zip(x, y)))
++                sgeom.LinearRing(list(zip(x, y))))
+         for srs, x, y in linestrings_data:
+             geoms_by_srs.setdefault(srs, []).append(
+-                sgeom.LineString(zip(x, y)))
++                sgeom.LineString(list(zip(x, y))))
+         for srs, x, y in points_data:
+             geoms_by_srs.setdefault(srs, []).append(
+-                sgeom.Point(zip(x, y)))
++                sgeom.Point(list(zip(x, y))))
+         return geoms_by_srs
+ 
+     def _find_polygon_coords(self, node, find_str):
+Index: Cartopy-0.18.0/lib/cartopy/io/shapereader.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/io/shapereader.py
++++ Cartopy-0.18.0/lib/cartopy/io/shapereader.py
+@@ -178,7 +178,7 @@ class BasicReader(object):
+         field_names = [field[0] for field in fields]
+         for i in range(self._reader.numRecords):
+             shape_record = self._reader.shapeRecord(i)
+-            attributes = dict(zip(field_names, shape_record.record))
++            attributes = dict(list(zip(field_names, shape_record.record)))
+             yield Record(shape_record.shape, attributes, fields)
+ 
+ 
+@@ -255,7 +255,7 @@ class FionaReader(object):
+         for item in self._data:
+             yield FionaRecord(item['geometry'],
+                               {key: value for key, value in
+-                               item.items() if key != 'geometry'})
++                               list(item.items()) if key != 'geometry'})
+ 
+ 
+ if _HAS_FIONA:
+Index: Cartopy-0.18.0/lib/cartopy/io/srtm.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/io/srtm.py
++++ Cartopy-0.18.0/lib/cartopy/io/srtm.py
+@@ -443,7 +443,7 @@ class SRTMDownloader(Downloader):
+ 
+         if SRTMDownloader._SRTM_LOOKUP_MASK[lon, colat]:
+             return (SRTMDownloader._SRTM_BASE_URL +
+-                    u'{y}{x}.SRTMGL{resolution}.hgt.zip').format(**format_dict)
++                    '{y}{x}.SRTMGL{resolution}.hgt.zip').format(**format_dict)
+         else:
+             return None
+ 
+@@ -459,7 +459,7 @@ class SRTMDownloader(Downloader):
+         srtm_online = self._urlopen(url)
+         zfh = ZipFile(six.BytesIO(srtm_online.read()), 'r')
+ 
+-        zip_member_path = u'{y}{x}.hgt'.format(**format_dict)
++        zip_member_path = '{y}{x}.hgt'.format(**format_dict)
+         member = zfh.getinfo(zip_member_path)
+         with open(target_path, 'wb') as fh:
+             fh.write(zfh.open(member).read())
+Index: Cartopy-0.18.0/lib/cartopy/mpl/feature_artist.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/mpl/feature_artist.py
++++ Cartopy-0.18.0/lib/cartopy/mpl/feature_artist.py
+@@ -51,7 +51,7 @@ def _freeze(obj):
+ 
+     """
+     if isinstance(obj, dict):
+-        obj = frozenset(((k, _freeze(v)) for k, v in obj.items()))
++        obj = frozenset(((k, _freeze(v)) for k, v in list(obj.items())))
+     elif isinstance(obj, list):
+         obj = tuple(_freeze(item) for item in obj)
+     elif isinstance(obj, np.ndarray):
+@@ -207,7 +207,7 @@ class FeatureArtist(matplotlib.artist.Ar
+         # Draw one PathCollection per style. We could instead pass an array
+         # of style items through to a single PathCollection, but that
+         # complexity does not yet justify the effort.
+-        for style, paths in stylised_paths.items():
++        for style, paths in list(stylised_paths.items()):
+             style = style_finalize(dict(style))
+             # Build path collection and draw it.
+             c = matplotlib.collections.PathCollection(paths,
+Index: Cartopy-0.18.0/lib/cartopy/mpl/geoaxes.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/mpl/geoaxes.py
++++ Cartopy-0.18.0/lib/cartopy/mpl/geoaxes.py
+@@ -548,7 +548,7 @@ class GeoAxes(matplotlib.axes.Axes):
+         ns = 'N' if lat >= 0.0 else 'S'
+         ew = 'E' if lon >= 0.0 else 'W'
+ 
+-        return u'%.4g, %.4g (%f\u00b0%s, %f\u00b0%s)' % (x, y, abs(lat),
++        return '%.4g, %.4g (%f\u00b0%s, %f\u00b0%s)' % (x, y, abs(lat),
+                                                          ns, abs(lon), ew)
+ 
+     def coastlines(self, resolution='auto', color='black', **kwargs):
+@@ -1405,7 +1405,7 @@ class GeoAxes(matplotlib.axes.Axes):
+                                                        locations=locations,
+                                                        offset=offset,
+                                                        units=units)
+-        for spine in spines.values():
++        for spine in list(spines.values()):
+             spine.set_visible(False)
+ 
+         spines['geo'] = GeoSpine(self)
+Index: Cartopy-0.18.0/lib/cartopy/mpl/gridliner.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/mpl/gridliner.py
++++ Cartopy-0.18.0/lib/cartopy/mpl/gridliner.py
+@@ -27,7 +27,7 @@ degree_locator = mticker.MaxNLocator(nbi
+ classic_locator = mticker.MaxNLocator(nbins=9)
+ classic_formatter = mticker.ScalarFormatter
+ 
+-_DEGREE_SYMBOL = u'\u00B0'
++_DEGREE_SYMBOL = '\u00B0'
+ _X_INLINE_PROJS = (
+     cartopy.crs.InterruptedGoodeHomolosine,
+     cartopy.crs.LambertConformal,
+@@ -78,14 +78,14 @@ def _lat_hemisphere(latitude):
+ 
+ 
+ def _east_west_formatted(longitude, num_format='g'):
+-    fmt_string = u'{longitude:{num_format}}{degree}{hemisphere}'
++    fmt_string = '{longitude:{num_format}}{degree}{hemisphere}'
+     return fmt_string.format(longitude=abs(longitude), num_format=num_format,
+                              hemisphere=_lon_hemisphere(longitude),
+                              degree=_DEGREE_SYMBOL)
+ 
+ 
+ def _north_south_formatted(latitude, num_format='g'):
+-    fmt_string = u'{latitude:{num_format}}{degree}{hemisphere}'
++    fmt_string = '{latitude:{num_format}}{degree}{hemisphere}'
+     return fmt_string.format(latitude=abs(latitude), num_format=num_format,
+                              hemisphere=_lat_hemisphere(latitude),
+                              degree=_DEGREE_SYMBOL)
+Index: Cartopy-0.18.0/lib/cartopy/mpl/style.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/mpl/style.py
++++ Cartopy-0.18.0/lib/cartopy/mpl/style.py
+@@ -68,7 +68,7 @@ def merge(*style_dicts):
+     for orig_style in style_dicts:
+         this_style = orig_style.copy()
+ 
+-        for alias_from, alias_to in _ALIASES.items():
++        for alias_from, alias_to in list(_ALIASES.items()):
+             alias = this_style.pop(alias_from, None)
+             if alias_from in orig_style:
+                 # n.b. alias_from doesn't trump alias_to
+Index: Cartopy-0.18.0/lib/cartopy/mpl/ticker.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/mpl/ticker.py
++++ Cartopy-0.18.0/lib/cartopy/mpl/ticker.py
+@@ -34,9 +34,9 @@ class _PlateCarreeFormatter(Formatter):
+ 
+     _target_projection = ccrs.PlateCarree()
+ 
+-    def __init__(self, degree_symbol=u'\u00B0', number_format='g',
++    def __init__(self, degree_symbol='\u00B0', number_format='g',
+                  transform_precision=1e-8, dms=False,
+-                 minute_symbol=u"'", second_symbol=u"''",
++                 minute_symbol="'", second_symbol="''",
+                  seconds_number_format='g',
+                  auto_hide=True):
+         """
+@@ -96,7 +96,7 @@ class _PlateCarreeFormatter(Formatter):
+         value, deg, mn, sec = self._get_dms(abs(value))
+ 
+         # Format
+-        label = u''
++        label = ''
+         if sec:
+             label = self._format_seconds(sec)
+ 
+@@ -161,20 +161,20 @@ class _PlateCarreeFormatter(Formatter):
+             number_format = 'd'
+         else:
+             number_format = self._degrees_number_format
+-        return u'{value:{number_format}}{symbol}'.format(
++        return '{value:{number_format}}{symbol}'.format(
+             value=abs(deg),
+             number_format=number_format,
+             symbol=self._degree_symbol)
+ 
+     def _format_minutes(self, mn):
+         """Format minutes as an integer"""
+-        return u'{value:d}{symbol}'.format(
++        return '{value:d}{symbol}'.format(
+             value=int(mn),
+             symbol=self._minute_symbol)
+ 
+     def _format_seconds(self, sec):
+         """Format seconds as an float"""
+-        return u'{value:{fmt}}{symbol}'.format(
++        return '{value:{fmt}}{symbol}'.format(
+             value=sec,
+             fmt=self._seconds_num_format,
+             symbol=self._second_symbol)
+@@ -202,9 +202,9 @@ class _PlateCarreeFormatter(Formatter):
+ 
+ class LatitudeFormatter(_PlateCarreeFormatter):
+     """Tick formatter for latitude axes."""
+-    def __init__(self, degree_symbol=u'\u00B0', number_format='g',
++    def __init__(self, degree_symbol='\u00B0', number_format='g',
+                  transform_precision=1e-8, dms=False,
+-                 minute_symbol=u"'", second_symbol=u"''",
++                 minute_symbol="'", second_symbol="''",
+                  seconds_number_format='g', auto_hide=True,
+                  ):
+         """
+@@ -218,7 +218,7 @@ class LatitudeFormatter(_PlateCarreeForm
+         ----------
+         degree_symbol: optional
+             The character(s) used to represent the degree symbol in the
+-            tick labels. Defaults to u'\u00B0' which is the unicode
++            tick labels. Defaults to u'\\u00B0' which is the unicode
+             degree symbol. Can be an empty string if no degree symbol is
+             desired.
+         number_format: optional
+@@ -306,12 +306,12 @@ class LongitudeFormatter(_PlateCarreeFor
+     def __init__(self,
+                  zero_direction_label=False,
+                  dateline_direction_label=False,
+-                 degree_symbol=u'\u00B0',
++                 degree_symbol='\u00B0',
+                  number_format='g',
+                  transform_precision=1e-8,
+                  dms=False,
+-                 minute_symbol=u"'",
+-                 second_symbol=u"''",
++                 minute_symbol="'",
++                 second_symbol="''",
+                  seconds_number_format='g',
+                  auto_hide=True,
+                  ):
+@@ -334,7 +334,7 @@ class LongitudeFormatter(_PlateCarreeFor
+             labels will not be drawn. Defaults to *False* (no direction
+             labels).
+         degree_symbol: optional
+-            The symbol used to represent degrees. Defaults to u'\u00B0'
++            The symbol used to represent degrees. Defaults to u'\\u00B0'
+             which is the unicode degree symbol.
+         number_format: optional
+             Format string to represent the latitude values when `dms`
+Index: Cartopy-0.18.0/lib/cartopy/sphinxext/summarise_package.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/sphinxext/summarise_package.py
++++ Cartopy-0.18.0/lib/cartopy/sphinxext/summarise_package.py
+@@ -112,7 +112,7 @@ def objects_to_document(module_name):
+         def is_from_this_module(x):
+             return getattr(x[1], '__module__', '') == module_name
+ 
+-        document_these = filter(is_from_this_module, document_these)
++        document_these = list(filter(is_from_this_module, document_these))
+         document_these = sorted(document_these,
+                                 key=lambda x: (str(type(x[1])),
+                                                not x[0].isupper(),
+Index: Cartopy-0.18.0/lib/cartopy/tests/mpl/__init__.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/tests/mpl/__init__.py
++++ Cartopy-0.18.0/lib/cartopy/tests/mpl/__init__.py
+@@ -312,23 +312,23 @@ def show(projection, geometry):
+                                            lw=0, alpha=0.2)
+                 plt.gca().add_patch(patch)
+             line_string = polygon.exterior
+-            plt.plot(*zip(*line_string.coords),
++            plt.plot(*list(zip(*line_string.coords)),
+                      marker='+', linestyle='-')
+     elif geometry.type == 'MultiPolygon':
+         multi_polygon = geometry
+         for polygon in multi_polygon:
+             line_string = polygon.exterior
+-            plt.plot(*zip(*line_string.coords),
++            plt.plot(*list(zip(*line_string.coords)),
+                      marker='+', linestyle='-')
+ 
+     elif geometry.type == 'MultiLineString':
+         multi_line_string = geometry
+         for line_string in multi_line_string:
+-            plt.plot(*zip(*line_string.coords),
++            plt.plot(*list(zip(*line_string.coords)),
+                      marker='+', linestyle='-')
+ 
+     elif geometry.type == 'LinearRing':
+-        plt.plot(*zip(*geometry.coords), marker='+', linestyle='-')
++        plt.plot(*list(zip(*geometry.coords)), marker='+', linestyle='-')
+ 
+     if 1:
+         # Whole map domain
+@@ -350,7 +350,7 @@ def show(projection, geometry):
+         plt.xlim(1.55e7, 1.65e7)
+         plt.ylim(0.3e7, 0.4e7)
+ 
+-    plt.plot(*zip(*projection.boundary.coords), marker='o',
++    plt.plot(*list(zip(*projection.boundary.coords)), marker='o',
+              scalex=False, scaley=False, zorder=-1)
+ 
+     plt.show()
+Index: Cartopy-0.18.0/lib/cartopy/tests/mpl/test_quiver.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/tests/mpl/test_quiver.py
++++ Cartopy-0.18.0/lib/cartopy/tests/mpl/test_quiver.py
+@@ -51,7 +51,7 @@ class TestQuiverShapes(object):
+                            self.u.ravel(), self.v.ravel(), transform=self.rp)
+         args, kwargs = patch.call_args
+         assert len(args) == 5
+-        assert sorted(kwargs.keys()) == [u'transform']
++        assert sorted(kwargs.keys()) == ['transform']
+         shapes = [arg.shape for arg in args[1:]]
+         # Assert that all the shapes have been broadcast.
+         assert shapes == [(70, )] * 4
+@@ -62,7 +62,7 @@ class TestQuiverShapes(object):
+             self.ax.quiver(self.x, self.y, self.u, self.v, transform=self.rp)
+         args, kwargs = patch.call_args
+         assert len(args) == 5
+-        assert sorted(kwargs.keys()) == [u'transform']
++        assert sorted(kwargs.keys()) == ['transform']
+         shapes = [arg.shape for arg in args[1:]]
+         # Assert that all the shapes have been broadcast.
+         assert shapes == [(7, 10)] * 4
+Index: Cartopy-0.18.0/lib/cartopy/tests/mpl/test_ticker.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/tests/mpl/test_ticker.py
++++ Cartopy-0.18.0/lib/cartopy/tests/mpl/test_ticker.py
+@@ -56,8 +56,8 @@ def test_LatitudeFormatter():
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [-90, -60, -30, 0, 30, 60, 90]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'90\u00B0S', u'60\u00B0S', u'30\u00B0S', u'0\u00B0',
+-                u'30\u00B0N', u'60\u00B0N', u'90\u00B0N']
++    expected = ['90\u00B0S', '60\u00B0S', '30\u00B0S', '0\u00B0',
++                '30\u00B0N', '60\u00B0N', '90\u00B0N']
+     assert result == expected
+ 
+ 
+@@ -67,8 +67,8 @@ def test_LatitudeFormatter_degree_symbol
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [-90, -60, -30, 0, 30, 60, 90]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'90S', u'60S', u'30S', u'0',
+-                u'30N', u'60N', u'90N']
++    expected = ['90S', '60S', '30S', '0',
++                '30N', '60N', '90N']
+     assert result == expected
+ 
+ 
+@@ -78,9 +78,9 @@ def test_LatitudeFormatter_number_format
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [-90, -60, -30, 0, 30, 60, 90]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'90.00\u00B0S', u'60.00\u00B0S', u'30.00\u00B0S',
+-                u'0.00\u00B0', u'30.00\u00B0N', u'60.00\u00B0N',
+-                u'90.00\u00B0N']
++    expected = ['90.00\u00B0S', '60.00\u00B0S', '30.00\u00B0S',
++                '0.00\u00B0', '30.00\u00B0N', '60.00\u00B0N',
++                '90.00\u00B0N']
+     assert result == expected
+ 
+ 
+@@ -92,8 +92,8 @@ def test_LatitudeFormatter_mercator():
+                   -3482189.085407435, 0.0, 3482189.085407435,
+                   8362698.548496634, 15496570.739707898]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'80\u00B0S', u'60\u00B0S', u'30\u00B0S', u'0\u00B0',
+-                u'30\u00B0N', u'60\u00B0N', u'80\u00B0N']
++    expected = ['80\u00B0S', '60\u00B0S', '30\u00B0S', '0\u00B0',
++                '30\u00B0N', '60\u00B0N', '80\u00B0N']
+     assert result == expected
+ 
+ 
+@@ -103,8 +103,8 @@ def test_LatitudeFormatter_small_numbers
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [40.1275150, 40.1275152, 40.1275154]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'40.1275150\u00B0N', u'40.1275152\u00B0N',
+-                u'40.1275154\u00B0N']
++    expected = ['40.1275150\u00B0N', '40.1275152\u00B0N',
++                '40.1275154\u00B0N']
+     assert result == expected
+ 
+ 
+@@ -114,8 +114,8 @@ def test_LongitudeFormatter_central_long
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [-180, -120, -60, 0, 60, 120, 180]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'180\u00B0W', u'120\u00B0W', u'60\u00B0W', u'0\u00B0',
+-                u'60\u00B0E', u'120\u00B0E', u'180\u00B0E']
++    expected = ['180\u00B0W', '120\u00B0W', '60\u00B0W', '0\u00B0',
++                '60\u00B0E', '120\u00B0E', '180\u00B0E']
+     assert result == expected
+ 
+ 
+@@ -125,8 +125,8 @@ def test_LongitudeFormatter_central_long
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [-180, -120, -60, 0, 60, 120, 180]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'0\u00B0E', u'60\u00B0E', u'120\u00B0E', u'180\u00B0',
+-                u'120\u00B0W', u'60\u00B0W', u'0\u00B0W']
++    expected = ['0\u00B0E', '60\u00B0E', '120\u00B0E', '180\u00B0',
++                '120\u00B0W', '60\u00B0W', '0\u00B0W']
+     assert result == expected
+ 
+ 
+@@ -136,8 +136,8 @@ def test_LongitudeFormatter_central_long
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [-180, -120, -60, 0, 60, 120, 180]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'60\u00B0W', u'0\u00B0', u'60\u00B0E', u'120\u00B0E',
+-                u'180\u00B0', u'120\u00B0W', u'60\u00B0W']
++    expected = ['60\u00B0W', '0\u00B0', '60\u00B0E', '120\u00B0E',
++                '180\u00B0', '120\u00B0W', '60\u00B0W']
+     assert result == expected
+ 
+ 
+@@ -148,7 +148,7 @@ def test_LongitudeFormatter_degree_symbo
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [-180, -120, -60, 0, 60, 120, 180]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'180W', u'120W', u'60W', u'0', u'60E', u'120E', u'180E']
++    expected = ['180W', '120W', '60W', '0', '60E', '120E', '180E']
+     assert result == expected
+ 
+ 
+@@ -159,9 +159,9 @@ def test_LongitudeFormatter_number_forma
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [-180, -120, -60, 0, 60, 120, 180]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'180.00\u00B0W', u'120.00\u00B0W', u'60.00\u00B0W',
+-                u'0.00\u00B0', u'60.00\u00B0E', u'120.00\u00B0E',
+-                u'180.00\u00B0E']
++    expected = ['180.00\u00B0W', '120.00\u00B0W', '60.00\u00B0W',
++                '0.00\u00B0', '60.00\u00B0E', '120.00\u00B0E',
++                '180.00\u00B0E']
+     assert result == expected
+ 
+ 
+@@ -173,8 +173,8 @@ def test_LongitudeFormatter_mercator():
+                   -6679169.447594353, 0.0, 6679169.447594353,
+                   13358338.895188706, 20037508.342783064]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'180\u00B0W', u'120\u00B0W', u'60\u00B0W', u'0\u00B0',
+-                u'60\u00B0E', u'120\u00B0E', u'180\u00B0E']
++    expected = ['180\u00B0W', '120\u00B0W', '60\u00B0W', '0\u00B0',
++                '60\u00B0E', '120\u00B0E', '180\u00B0E']
+     assert result == expected
+ 
+ 
+@@ -184,8 +184,8 @@ def test_LongitudeFormatter_small_number
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [-17.1142343, -17.1142340, -17.1142337]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'17.1142343\u00B0W', u'17.1142340\u00B0W',
+-                u'17.1142337\u00B0W']
++    expected = ['17.1142343\u00B0W', '17.1142340\u00B0W',
++                '17.1142337\u00B0W']
+     assert result == expected
+ 
+ 
+@@ -196,20 +196,20 @@ def test_LongitudeFormatter_small_number
+     formatter.axis = Mock(axes=Mock(GeoAxes, projection=p))
+     test_ticks = [-17.1142343, -17.1142340, -17.1142337]
+     result = [formatter(tick) for tick in test_ticks]
+-    expected = [u'162.8857657\u00B0E', u'162.8857660\u00B0E',
+-                u'162.8857663\u00B0E']
++    expected = ['162.8857657\u00B0E', '162.8857660\u00B0E',
++                '162.8857663\u00B0E']
+     assert result == expected
+ 
+ 
+ @pytest.mark.parametrize("test_ticks,expected",
+                          [pytest.param([-3.75, -3.5],
+-                                       [u"3\u00B0W45'", u"3\u00B0W30'"],
++                                       ["3\u00B0W45'", "3\u00B0W30'"],
+                                        id='minutes_no_hide'),
+                           pytest.param([-3.5, -3.],
+-                                       [u"30'", u"3\u00B0W"],
++                                       ["30'", "3\u00B0W"],
+                                        id='minutes_hide'),
+                           pytest.param([-3. - 2 * ONE_MIN - 30 * ONE_SEC],
+-                                       [u"3\u00B0W2'30''"],
++                                       ["3\u00B0W2'30''"],
+                                        id='seconds'),
+                           ])
+ def test_LongitudeFormatter_minutes_seconds(test_ticks, expected):
+@@ -221,7 +221,7 @@ def test_LongitudeFormatter_minutes_seco
+ 
+ @pytest.mark.parametrize("test_ticks,expected",
+                          [pytest.param([-3.75, -3.5],
+-                                       [u"3\u00B0S45'", u"3\u00B0S30'"],
++                                       ["3\u00B0S45'", "3\u00B0S30'"],
+                                        id='minutes_no_hide'),
+                           ])
+ def test_LatitudeFormatter_minutes_seconds(test_ticks, expected):
+Index: Cartopy-0.18.0/lib/cartopy/tests/test_img_nest.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/tests/test_img_nest.py
++++ Cartopy-0.18.0/lib/cartopy/tests/test_img_nest.py
+@@ -166,12 +166,12 @@ def test_intersect(tmpdir):
+ 
+     # Check the image ancestry.
+     zoom_levels = ['dummy-z-0', 'dummy-z-1']
+-    assert sorted(k[0] for k in nic._ancestry.keys()) == zoom_levels
++    assert sorted(k[0] for k in list(nic._ancestry.keys())) == zoom_levels
+ 
+     expected = [('dummy-z-0', ['p1.tif']),
+                 ('dummy-z-1', ['p2-3.tif', 'p2-4.tif', 'p2-5.tif'])]
+     for zoom, image_names in expected:
+-        key = [k for k in nic._ancestry.keys() if k[0] == zoom][0]
++        key = [k for k in list(nic._ancestry.keys()) if k[0] == zoom][0]
+         ancestry = nic._ancestry[key]
+         fnames = sorted([os.path.basename(item[1].filename)
+                          for item in ancestry])
+@@ -249,7 +249,7 @@ def test_nest(nest_from_config):
+ 
+     z0_key = ('aerial z0 test', z0.images[0])
+ 
+-    assert z0_key in nest_z0_z1._ancestry.keys()
++    assert z0_key in list(nest_z0_z1._ancestry.keys())
+     assert len(nest_z0_z1._ancestry) == 1
+ 
+     # check that it has figured out that all the z1 images are children of
+@@ -269,7 +269,7 @@ def test_nest(nest_from_config):
+ 
+     # check that the the images in the nest from configuration are the
+     # same as those created by hand.
+-    for name in nest_z0_z1._collections_by_name.keys():
++    for name in list(nest_z0_z1._collections_by_name.keys()):
+         for img in nest_z0_z1._collections_by_name[name].images:
+             collection = nest_from_config._collections_by_name[name]
+             assert img in collection.images
+Index: Cartopy-0.18.0/lib/cartopy/tests/test_shapereader.py
+===================================================================
+--- Cartopy-0.18.0.orig/lib/cartopy/tests/test_shapereader.py
++++ Cartopy-0.18.0/lib/cartopy/tests/test_shapereader.py
+@@ -120,7 +120,7 @@ class TestRivers(object):
+                                'name': self.river_name,
+                                'name_en': self.river_name,
+                                'scalerank': 2}
+-        for key, value in river_record.attributes.items():
++        for key, value in list(river_record.attributes.items()):
+             if key in expected_attributes:
+                 assert value == expected_attributes[key]
+         assert river_record.geometry == self.test_river_geometry
+Index: Cartopy-0.18.0/setup.py
+===================================================================
+--- Cartopy-0.18.0.orig/setup.py
++++ Cartopy-0.18.0/setup.py
+@@ -4,7 +4,7 @@
+ # See COPYING and COPYING.LESSER in the root of the repository for full
+ # licensing details.
+ 
+-from __future__ import print_function
++
+ 
+ import fnmatch
+ import os
+Index: Cartopy-0.18.0/versioneer.py
+===================================================================
+--- Cartopy-0.18.0.orig/versioneer.py
++++ Cartopy-0.18.0/versioneer.py
+@@ -344,11 +344,11 @@ https://creativecommons.org/publicdomain
+ 
+ """
+ 
+-from __future__ import print_function
++
+ try:
+     import configparser
+ except ImportError:
+-    import ConfigParser as configparser
++    import configparser as configparser
+ import errno
+ import json
+ import os
+@@ -1517,7 +1517,7 @@ def render_pep440_branch_based(pieces):
+ 
+     replacements = {' ': '.', '(': '', ')': ''}
+     branch_name = pieces.get('branch')
+-    for old, new in replacements.items():
++    for old, new in list(replacements.items()):
+         branch_name = branch_name.replace(old, new)
+     master = branch_name == 'master'
+     maint = re.match(default_maint_branch_regexp,
