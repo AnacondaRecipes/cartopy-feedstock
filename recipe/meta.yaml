@@ -23,7 +23,9 @@ requirements:
     - setuptools_scm
     - wheel
     - cython
-    - numpy
+    - numpy   1.19  # [py<310]
+    - numpy   1.21  # [py==310]
+    - numpy   1.23  # [py>=311]
     - geos
   run:
     - python
