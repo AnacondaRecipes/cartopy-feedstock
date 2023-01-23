@@ -37,13 +37,17 @@ requirements:
     - pyproj >=3.0.0
 
 test:
+  requires:
+    - pip
+    - pytest
   imports:
     - cartopy
     - cartopy.mpl.geoaxes
     - cartopy.crs
   commands:
     - python -c "import cartopy.crs as ccrs; import matplotlib.pyplot as plt; ax = plt.axes(projection=ccrs.PlateCarree())"
-
+    - pip check
+    - python -m pytest --pyargs --doctest-modules cartopy
 about:
   home: http://scitools.org.uk/cartopy
   license: LGPL-3
