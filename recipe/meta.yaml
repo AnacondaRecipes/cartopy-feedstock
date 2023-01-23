@@ -6,21 +6,16 @@ package:
 
 source:
   url: https://pypi.io/packages/source/C/Cartopy/Cartopy-{{ version }}.tar.gz
-  patches:
-    - port310.patch
   sha256: 89d5649712c8582231c6e11825a04c85f6f0cee94dbb89e4db23eabca1cc250a
 
 build:
   skip: True  # [win and vc<14]
-  error_overlinking: true
   number: 0
 
 requirements:
   build:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
-    - patch  # [not win]
-    - m2-patch  # [win]
   host:
     - python
     - pip
