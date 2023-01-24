@@ -48,12 +48,12 @@ test:
     - pip check
     - python -m pytest --pyargs --doctest-modules cartopy
 about:
-  home: http://scitools.org.uk/cartopy
-  license: LGPL-3
+  home: https://scitools.org.uk/cartopy
+  license: LGPL-3.0
+  license_family: GPL
   license_file:
     - COPYING
     - COPYING.LESSER
-  license_family: LGPL
   summary: A library providing cartographic tools for python
   description: |
     Cartopy is a Python package designed for geospatial data processing in order to produce maps and other geospatial data analyses.
