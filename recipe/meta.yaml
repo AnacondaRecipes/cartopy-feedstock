@@ -51,7 +51,7 @@ test:
 about:
   home: https://scitools.org.uk/cartopy
   license: LGPL-3.0
-  license_family: GPL
+  license_family: LGPL
   license_file:
     - COPYING
     - COPYING.LESSER
