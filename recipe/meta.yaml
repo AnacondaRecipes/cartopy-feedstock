@@ -23,7 +23,7 @@ requirements:
     - setuptools
     - setuptools_scm
     - wheel
-    - cython
+    - cython 0.29
     - numpy   1.19  # [py<310]
     - numpy   1.21  # [py==310]
     - numpy   1.23  # [py>=311]
