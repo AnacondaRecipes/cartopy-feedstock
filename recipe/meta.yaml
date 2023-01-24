@@ -27,7 +27,7 @@ requirements:
     - numpy   1.19  # [py<310]
     - numpy   1.21  # [py==310]
     - numpy   1.23  # [py>=311]
-    - geos
+    - geos    3.9.1
   run:
     - python
     - {{ pin_compatible('numpy') }}
