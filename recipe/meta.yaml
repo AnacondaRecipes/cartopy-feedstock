@@ -43,10 +43,6 @@ test:
   requires:
     - pip
     - pytest
-  imports:
-    - cartopy
-    - cartopy.mpl.geoaxes
-    - cartopy.crs
   commands:
     - python -c "import cartopy.crs as ccrs; import matplotlib.pyplot as plt; ax = plt.axes(projection=ccrs.PlateCarree())"
     - pip check
