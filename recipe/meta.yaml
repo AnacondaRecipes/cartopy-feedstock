@@ -56,7 +56,7 @@ test:
     - python -m pytest --pyargs --doctest-modules cartopy || cmd /K "exit /b 0"  # [win]
 about:
   home: https://scitools.org.uk/cartopy
-  license: LGPL-3.0
+  license: LGPL-3.0-only
   license_family: LGPL
   license_file:
     - COPYING
