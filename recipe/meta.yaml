@@ -10,7 +10,7 @@ source:
 
 build:
   # s390x is missing geos and this package is not in the SoW
-  skip: True  # [(win and vc<14) or s390x]
+  skip: True  # [(win and vc<14) or s390x or py<38]
   number: 0
 
 requirements:
