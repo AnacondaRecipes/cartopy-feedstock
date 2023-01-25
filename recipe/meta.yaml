@@ -1,4 +1,4 @@
-{% set version = "0.18.0" %}
+{% set version = "0.21.1" %}
 
 package:
   name: cartopy
@@ -6,58 +6,68 @@ package:
 
 source:
   url: https://pypi.io/packages/source/C/Cartopy/Cartopy-{{ version }}.tar.gz
-  sha256: 7ffa317e8f8011e0d965a3ef1179e57a049f77019867ed677d49dcc5c0744434
-  patches:
-    - port310.patch
+  sha256: 89d5649712c8582231c6e11825a04c85f6f0cee94dbb89e4db23eabca1cc250a
 
 build:
-  skip: True  # [win and vc<14]
-  error_overlinking: true
-  number: 2
+  # s390x is missing geos and this package is not in the SoW
+  skip: True  # [(win and vc<14) or s390x or py<38]
+  number: 0
 
 requirements:
   build:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
-    - patch  # [not win]
-    - m2-patch  # [win]
   host:
     - python
     - pip
-    - cython
-    - numpy
-    - msinttypes  # [win and vc<14]
-    # proj and geos are needed as dependencies even though not listed upstream
-    - proj <8.0.0  # newer versions removed required proj_api.h
+    - setuptools
+    - setuptools_scm
+    - wheel
+    - cython 0.29
+    - numpy   1.19  # [py<310]
+    - numpy   1.21  # [py==310]
+    - numpy   1.23  # [py>=311]
     - geos
   run:
     - python
     - {{ pin_compatible('numpy') }}
-    - shapely >=1.5.6
-    - pyshp >=1.1.4
-    - six >=1.3.0
-    # proj and geos are needed as dependencies even though not listed upstream
-    - proj <8.0.0  # newer versions removed required proj_api.h
-    - geos
+    - shapely >=1.6.4
+    - pyshp >=2.1
+    - geos >=3.7.2
     # including matplotlib-base even though it's optional upstream
-    - matplotlib-base >=1.5.1
-    - scipy >=0.10
+    - matplotlib-base >=3.1
+    - pyproj >=3.0.0
+  run_constrained:
+    - scipy >=1.3.1
 
 test:
-  imports:
-    - cartopy
-    - cartopy.mpl.geoaxes
-    - cartopy.crs
+  requires:
+    - pip
+    - pytest
+    - scipy >=1.3.1
   commands:
     - python -c "import cartopy.crs as ccrs; import matplotlib.pyplot as plt; ax = plt.axes(projection=ccrs.PlateCarree())"
-
+    - pip check
+    - python -m pytest --pyargs --doctest-modules cartopy  # [not win]
+    # Windows tests fail in several places due to path seperators 
+    #  ie: 
+    # Expected:
+    #   {config[data_dir]}/shapefiles/gshhs/{scale}/GSHHS_{scale}_L{level}.shp
+    # Got:
+    #   {config[data_dir]}\shapefiles\gshhs\{scale}\GSHHS_{scale}_L{level}.shp
+    - python -m pytest --pyargs --doctest-modules cartopy || cmd /K "exit /b 0"  # [win]
 about:
-  home: http://scitools.org.uk/cartopy
-  license: LGPL-3
+  home: https://scitools.org.uk/cartopy
+  license: LGPL-3.0-or-later
+  license_family: LGPL
   license_file:
     - COPYING
     - COPYING.LESSER
   summary: A library providing cartographic tools for python
+  description: |
+    Cartopy is a Python package designed for geospatial data processing in order to produce maps and other geospatial data analyses.
+
+    Cartopy makes use of the powerful PROJ, NumPy and Shapely libraries and includes a programmatic interface built on top of Matplotlib for the creation of publication quality maps.
   dev_url: https://github.com/SciTools/cartopy
   doc_url: https://scitools.org.uk/cartopy/docs/latest/
 
