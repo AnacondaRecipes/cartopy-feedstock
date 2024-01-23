@@ -1,4 +1,4 @@
-{% set version = "0.21.1" %}
+{% set version = "0.22.0" %}
 
 package:
   name: cartopy
@@ -6,11 +6,11 @@ package:
 
 source:
   url: https://pypi.io/packages/source/C/Cartopy/Cartopy-{{ version }}.tar.gz
-  sha256: 89d5649712c8582231c6e11825a04c85f6f0cee94dbb89e4db23eabca1cc250a
+  sha256: b300f90120931d43f11ef87c064ea1dacec1b59a4940aa76ebf82cf09548bb49
 
 build:
   # s390x is missing geos and this package is not in the SoW
-  skip: True  # [(win and vc<14) or s390x or py<38]
+  skip: True  # [(win and vc<14) or s390x or py<39]
   number: 0
 
 requirements:
@@ -24,38 +24,30 @@ requirements:
     - setuptools_scm
     - wheel
     - cython 0.29
-    - numpy   1.19  # [py<310]
-    - numpy   1.21  # [py==310]
-    - numpy   1.23  # [py>=311]
-    - geos
+    - numpy {{ numpy }}
   run:
     - python
     - {{ pin_compatible('numpy') }}
-    - shapely >=1.6.4
+    - shapely >=1.7
+    - packaging >=20
     - pyshp >=2.1
-    - geos >=3.7.2
-    # including matplotlib-base even though it's optional upstream
-    - matplotlib-base >=3.1
-    - pyproj >=3.0.0
+    - matplotlib-base >=3.4
+    - pyproj >=3.1.0
   run_constrained:
     - scipy >=1.3.1
+    - pillow >=6.1.0
 
 test:
   requires:
     - pip
-    - pytest
+    - pytest >=5.1.2
+    - pytest-xdist
     - scipy >=1.3.1
   commands:
     - python -c "import cartopy.crs as ccrs; import matplotlib.pyplot as plt; ax = plt.axes(projection=ccrs.PlateCarree())"
     - pip check
-    - python -m pytest --pyargs --doctest-modules cartopy  # [not win]
-    # Windows tests fail in several places due to path seperators 
-    #  ie: 
-    # Expected:
-    #   {config[data_dir]}/shapefiles/gshhs/{scale}/GSHHS_{scale}_L{level}.shp
-    # Got:
-    #   {config[data_dir]}\shapefiles\gshhs\{scale}\GSHHS_{scale}_L{level}.shp
-    - python -m pytest --pyargs --doctest-modules cartopy || cmd /K "exit /b 0"  # [win]
+    - pytest -ra -n 4 --pyargs cartopy
+
 about:
   home: https://scitools.org.uk/cartopy
   license: LGPL-3.0-or-later
