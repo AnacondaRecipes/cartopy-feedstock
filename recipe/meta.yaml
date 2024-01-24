@@ -9,7 +9,7 @@ source:
   sha256: b300f90120931d43f11ef87c064ea1dacec1b59a4940aa76ebf82cf09548bb49
 
 build:
-  # s390x is missing geos and this package is not in the SoW
+  # s390x: this package is not in the SoW
   skip: True  # [(win and vc<14) or s390x or py<39]
   number: 0
 
