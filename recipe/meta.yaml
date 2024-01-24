@@ -23,7 +23,7 @@ requirements:
     - setuptools
     - setuptools_scm
     - wheel
-    - cython 0.29
+    - cython >=0.29.24
     - numpy {{ numpy }}
   run:
     - python
