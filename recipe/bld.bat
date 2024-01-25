@@ -5,4 +5,4 @@ set FORCE_CYTHON=1
 
 rmdir lib\cartopy\tests\mpl\baseline_images /s /q
 
-%PYTHON% -m pip install --no-deps --ignore-installed .
+%PYTHON% -m pip install --no-deps --no-build-isolation --ignore-installed .
