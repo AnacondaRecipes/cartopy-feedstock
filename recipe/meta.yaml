@@ -1,17 +1,17 @@
 {% set name = "cartopy" %}
-{% set version = "0.24.1" %}
+{% set version = "0.25.0" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 01c910d5634c69a7efdec46e0a17d473d2328767f001d4dc0b5c4b48e585c8bd
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: 55f1a390e5f3f075b221c7d91fb10258ad978db786c7930eba06eb45d28753fe
 
 build:
   # s390x: this package is not in the SoW
-  skip: True  # [(win and vc<14) or s390x or py<310]
+  skip: true  # [(win and vc<14) or s390x or py<310]
   number: 0
   script_env:
     - SETUPTOOLS_SCM_PRETEND_VERSION={{version}}
@@ -23,24 +23,26 @@ requirements:
   host:
     - python
     - pip
-    - setuptools
+    - setuptools >=77.0.3
     - setuptools_scm
     - wheel
     - cython >=0.29.24
-    - numpy 2.0 # [py<313]
-    - numpy 2.1 # [py==313]
+    - numpy >=2.0.0
+    - numpy 2.1  # [py==313]
+    - setuptools-scm >=8.0.0
   run:
     - python
     - numpy >=1.23
-    - shapely >=1.8
+    - shapely >=2.0
     - packaging >=21
     - pyshp >=2.3
     - matplotlib-base >=3.6
     - pyproj >=3.3.1
+    - {{ pin_compatible('numpy') }}
   run_constrained:
     - scipy >=1.9
     - pillow >=9.1
-    - owslib >=0.27.0
+    - OWSLib >=0.27.0
 
 test:
   requires:
