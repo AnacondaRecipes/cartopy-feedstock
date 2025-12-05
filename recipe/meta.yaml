@@ -1,57 +1,65 @@
 {% set name = "cartopy" %}
-{% set version = "0.24.1" %}
+{% set version = "0.25.0" %}
 
 package:
-  name: {{ name|lower }}
+  name: {{ name }}
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 01c910d5634c69a7efdec46e0a17d473d2328767f001d4dc0b5c4b48e585c8bd
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: 55f1a390e5f3f075b221c7d91fb10258ad978db786c7930eba06eb45d28753fe
 
 build:
-  # s390x: this package is not in the SoW
-  skip: True  # [(win and vc<14) or s390x or py<310]
   number: 0
-  script_env:
-    - SETUPTOOLS_SCM_PRETEND_VERSION={{version}}
+  skip: true  # [py<310]
 
 requirements:
   build:
+    - {{ stdlib('c') }}
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
   host:
     - python
     - pip
-    - setuptools
-    - setuptools_scm
     - wheel
+    - setuptools >=77.0.3
+    - setuptools_scm >=8.0.0
     - cython >=0.29.24
-    - numpy 2.0 # [py<313]
-    - numpy 2.1 # [py==313]
+    - numpy {{ numpy }}
   run:
     - python
     - numpy >=1.23
-    - shapely >=1.8
+    - matplotlib-base >=3.6
+    - shapely >=2.0
     - packaging >=21
     - pyshp >=2.3
-    - matplotlib-base >=3.6
     - pyproj >=3.3.1
   run_constrained:
-    - scipy >=1.9
-    - pillow >=9.1
+    # ows
     - owslib >=0.27.0
+    - pillow >=9.1
+    # plotting
+    - scipy >=1.9
 
 test:
+  imports:
+    - cartopy
+    - cartopy.crs
+    - cartopy.feature
+    - cartopy.img_transform
+    - cartopy.io
+    - cartopy.mpl
+    - cartopy.trace
+    - cartopy.util
+    - cartopy.vector_transform
+  commands:
+    - pip check
+    - pytest -ra -n 4 --pyargs cartopy
   requires:
     - pip
     - pytest >=5.1.2
     - pytest-xdist
-    - scipy >=1.3.1
-  commands:
-    - python -c "import cartopy.crs as ccrs; import matplotlib.pyplot as plt; ax = plt.axes(projection=ccrs.PlateCarree())"
-    - pip check
-    - pytest -ra -n 4 --pyargs cartopy
+    - scipy >=1.9
 
 about:
   home: https://scitools.org.uk/cartopy
@@ -64,7 +72,7 @@ about:
 
     Cartopy makes use of the powerful PROJ, NumPy and Shapely libraries and includes a programmatic interface built on top of Matplotlib for the creation of publication quality maps.
   dev_url: https://github.com/SciTools/cartopy
-  doc_url: https://scitools.org.uk/cartopy/docs/latest/
+  doc_url: https://scitools.org.uk/cartopy/docs/latest
 
 extra:
   recipe-maintainers:
