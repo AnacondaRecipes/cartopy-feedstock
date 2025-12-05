@@ -49,8 +49,6 @@ test:
     - cartopy.img_transform
     - cartopy.io
     - cartopy.mpl
-    - cartopy.siteconfig
-    - cartopy.tests
     - cartopy.trace
     - cartopy.util
     - cartopy.vector_transform
