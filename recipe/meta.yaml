@@ -1,5 +1,5 @@
 {% set name = "cartopy" %}
-{% set version = "0.25.0" %}
+{% set version = "0.26.0" %}
 
 package:
   name: {{ name }}
@@ -7,11 +7,11 @@ package:
 
 source:
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 55f1a390e5f3f075b221c7d91fb10258ad978db786c7930eba06eb45d28753fe
+  sha256: b87a35835f30333760cc46194bd90b6a4958d12f488f50131d4c4c0962ad9c3c
 
 build:
   number: 0
-  skip: true  # [py<310]
+  skip: true  # [py<311]
 
 requirements:
   build:
@@ -21,25 +21,27 @@ requirements:
   host:
     - python
     - pip
-    - wheel
     - setuptools >=77.0.3
     - setuptools_scm >=8.0.0
-    - cython >=0.29.24
+    - cython >=3.0
     - numpy {{ numpy }}
+    - numpy >=2.0.0
+    - setuptools-scm >=8.0.0
   run:
     - python
     - numpy >=1.23
-    - matplotlib-base >=3.6
+    - matplotlib-base >=3.8
     - shapely >=2.0
     - packaging >=21
-    - pyshp >=2.3
-    - pyproj >=3.3.1
+    - pyshp >=2.3.1
+    - pyproj >=3.6
+    - {{ pin_compatible('numpy') }}
   run_constrained:
     # ows
-    - owslib >=0.27.0
+    - OWSLib >=0.29.0
     - pillow >=9.1
     # plotting
-    - scipy >=1.9
+    - scipy >=1.11
 
 test:
   imports:
